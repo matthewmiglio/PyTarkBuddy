@@ -1,0 +1,51 @@
+# PyTarkAudio
+#
+# Read this before adding to it: some binaries here ARE source, not junk.
+# Committed on purpose:
+#   gui/pytarkaudio.ico    the window, taskbar and exe icon, generated from the svg beside it
+#                          by scripts/make_icon.py, committed so a build never needs cairo
+#   docs/assets/**         the images the README links
+# Do not add a blanket *.ico rule.
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.ipynb_checkpoints/
+
+# ---- Build output ----
+build/
+dist/
+*.spec
+*.msi
+
+# ---- Editors and OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Local tool state ----
+.claude/
+
+# ---- Not published ----
+# docs/ itself stays out; assets is the exception, the README links its images.
+docs/*
+!docs/assets/

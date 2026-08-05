@@ -1,0 +1,127 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>PyTarkAudio &mdash; favicon candidates</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; padding: 40px 24px;
+    font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+    background: #f6f6f7; color: #16181d;
+  }
+  h1 { margin: 0; font-size: 26px; letter-spacing: -.02em; }
+  p.sub { margin: 4px 0 32px; opacity: .6; font-style: italic; }
+  .grid {
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    max-width: 1200px;
+  }
+  .card {
+    background: #fff; border: 1px solid #e2e3e7; border-radius: 12px;
+    padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .card:hover { border-color: #9aa0aa; }
+  .art { display: flex; align-items: flex-end; gap: 12px; height: 68px; }
+  .art svg { color: #16181d; }
+  .name { font-size: 12px; opacity: .55; font-family: ui-monospace, Consolas, monospace; }
+  button {
+    font: inherit; font-size: 13px; width: 100%; padding: 6px;
+    border: 1px solid #d0d2d8; border-radius: 7px; background: #f2f3f5;
+    color: inherit; cursor: pointer;
+  }
+  button:hover { background: #e6e8ec; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #14161a; color: #e8eaee; }
+    .card { background: #1c1f25; border-color: #2c3039; }
+    .card:hover { border-color: #4a505c; }
+    .art svg { color: #e8eaee; }
+    button { background: #262a32; border-color: #363b45; }
+    button:hover { background: #323742; }
+  }
+</style>
+
+<h1>PyTarkAudio favicon candidates</h1>
+<p class="sub">hear the small things. &mdash; each shown at 64px and 16px, click to download the SVG</p>
+<div class="grid" id="grid"></div>
+
+<script>
+// stroke-based, single colour, so they survive being shrunk to a 16px tab icon
+const ICONS = {
+  "rails-squeeze":   `<path d="M6 16h52M6 48h52"/><path d="M18 24v16M28 20v24M38 27v10M48 22v20"/>`,
+  "ear-waves":       `<path d="M20 48v-6c-4-3-8-9-8-15a14 14 0 1 1 28 0c0 8-8 9-8 15a5 5 0 0 1-9 3"/><path d="M48 24a12 12 0 0 1 0 18"/>`,
+  "footprint":       `<ellipse cx="27" cy="26" rx="13" ry="16" fill="currentColor" stroke="none"/><ellipse cx="31" cy="51" rx="9" ry="7" fill="currentColor" stroke="none"/>`,
+  "footstep-heard":  `<ellipse cx="20" cy="28" rx="10" ry="13" fill="currentColor" stroke="none"/><ellipse cx="23" cy="49" rx="7" ry="6" fill="currentColor" stroke="none"/><path d="M42 22a14 14 0 0 1 0 22M50 16a22 22 0 0 1 0 34"/>`,
+  "eq-levelled":     `<path d="M14 22v20M28 22v20M42 22v20M56 22v20" stroke-width="6"/>`,
+  "eq-uneven":       `<path d="M14 40v10M28 18v32M42 30v20M56 24v26" stroke-width="6"/>`,
+  "crosshair-wave":  `<circle cx="32" cy="32" r="22"/><path d="M32 4v10M32 50v10M4 32h10M50 32h10"/><path d="M24 32h4l3-7 4 14 3-7h4"/>`,
+  "headphones":      `<path d="M14 42V32a18 18 0 0 1 36 0v10"/><rect x="8" y="38" width="12" height="18" rx="6"/><rect x="44" y="38" width="12" height="18" rx="6"/>`,
+  "headphones-wave": `<path d="M14 38V30a18 18 0 0 1 36 0v8"/><rect x="8" y="36" width="11" height="16" rx="5.5"/><rect x="45" y="36" width="11" height="16" rx="5.5"/><path d="M24 44h3l3-6 4 12 3-6h3"/>`,
+  "speaker":         `<path d="M10 26h9l13-11v34L19 38h-9z"/><path d="M42 24a13 13 0 0 1 0 16"/>`,
+  "speaker-tamed":   `<path d="M10 26h9l13-11v34L19 38h-9z"/><path d="M42 26l14 12M56 26L42 38"/>`,
+  "sonar-ping":      `<circle cx="32" cy="32" r="4" fill="currentColor" stroke="none"/><path d="M42 22a14 14 0 0 1 0 20M50 14a26 26 0 0 1 0 36"/>`,
+  "radar-sweep":     `<circle cx="32" cy="32" r="24"/><circle cx="32" cy="32" r="11"/><path d="M32 32L52 18"/><circle cx="44" cy="42" r="4" fill="currentColor" stroke="none"/>`,
+  "vu-meter":        `<path d="M8 44a24 24 0 0 1 48 0"/><path d="M32 44L46 26"/><circle cx="32" cy="44" r="4" fill="currentColor" stroke="none"/>`,
+  "knee-curve":      `<path d="M10 10v44h44" opacity=".45"/><path d="M14 50L34 30c6-6 10-3 20-8"/>`,
+  "clamp-in":        `<path d="M32 6v14M26 14l6 6 6-6"/><path d="M8 32h48" stroke-width="6"/><path d="M32 58V44M26 50l6-6 6 6"/>`,
+  "flat-wave":       `<path d="M6 20h52M6 44h52" opacity=".45"/><path d="M6 40c6 0 5-16 12-16s6 16 13 16 5-16 12-16 6 16 15 16"/>`,
+  "ear-target":      `<circle cx="32" cy="32" r="25"/><path d="M26 46v-5c-3-2-6-7-6-11a11 11 0 1 1 22 0c0 6-6 7-6 11a4 4 0 0 1-7 2"/>`,
+  "bush-rustle":     `<path d="M32 52V32M32 40l-9-9M32 36l9-9"/><path d="M22 24a10 10 0 1 1 20 0"/><path d="M50 18a20 20 0 0 1 0 28"/>`,
+  "gunfire-ducked":  `<path d="M8 24h30l8 8-8 8H8z"/><path d="M52 20v24M46 38l6 6 6-6"/>`,
+  "wave-in-circle":  `<circle cx="32" cy="32" r="25"/><path d="M14 32h5l4-11 6 22 5-16 4 9h12"/>`,
+  "volume-cap":      `<path d="M12 26h9l13-11v34L21 38h-9z"/><path d="M44 18h12M44 46h12" opacity=".45"/><path d="M50 24v16"/>`,
+  "sine-to-square":  `<path d="M4 32c5-14 11-14 16 0s11 14 16 0"/><path d="M36 32h6V18h8v28h6"/>`,
+  "amplify-quiet":   `<path d="M10 50v-6M24 50v-14M38 50v-22M52 50V22" stroke-width="6"/><path d="M52 22l-6 7M52 22l6 7"/>`,
+  "both-ways":       `<path d="M20 8v16M14 18l6 6 6-6"/><path d="M6 34h52" stroke-width="6"/><path d="M44 56V40M38 46l6-6 6 6"/>`,
+  "shield-wave":     `<path d="M32 6l22 8v18c0 14-10 22-22 26-12-4-22-12-22-26V14z"/><path d="M20 32h4l4-9 5 18 4-11 3 6h4"/>`,
+  "db-badge":        `<rect x="7" y="7" width="50" height="50" rx="14"/><text x="32" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="24" font-weight="700" fill="currentColor" stroke="none">dB</text>`,
+  "step-in-range":   `<circle cx="32" cy="32" r="25"/><ellipse cx="30" cy="26" rx="7" ry="9" fill="currentColor" stroke="none"/><ellipse cx="32" cy="42" rx="5" ry="4" fill="currentColor" stroke="none"/>`,
+  "faders":          `<path d="M16 8v48M32 8v48M48 8v48" opacity=".45"/><rect x="8" y="36" width="16" height="9" rx="4.5" fill="currentColor" stroke="none"/><rect x="24" y="16" width="16" height="9" rx="4.5" fill="currentColor" stroke="none"/><rect x="40" y="28" width="16" height="9" rx="4.5" fill="currentColor" stroke="none"/>`,
+  "threshold-line":  `<path d="M4 44l8-4 6-22 7 34 6-26 6 14 5-9 6 6 10-5"/><path d="M4 26h56" stroke-dasharray="6 5" opacity=".55"/>`,
+};
+
+const NS = "http://www.w3.org/2000/svg";
+
+function draw(inner, size) {
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 64 64");
+  svg.setAttribute("width", size);
+  svg.setAttribute("height", size);
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "4");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.innerHTML = inner;
+  return svg;
+}
+
+function download(name, inner) {
+  const svg = draw(inner, 64);
+  svg.setAttribute("xmlns", NS);
+  svg.setAttribute("color", "#16181d");  // currentColor has nothing to inherit once standalone
+  const url = URL.createObjectURL(new Blob([svg.outerHTML], { type: "image/svg+xml" }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: `${name}.svg` });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+const grid = document.getElementById("grid");
+for (const [name, inner] of Object.entries(ICONS)) {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const art = document.createElement("div");
+  art.className = "art";
+  art.append(draw(inner, 64), draw(inner, 16));  // 16px preview is the real legibility test
+
+  const label = document.createElement("div");
+  label.className = "name";
+  label.textContent = name;
+
+  const btn = document.createElement("button");
+  btn.textContent = "Download SVG";
+  btn.onclick = () => download(name, inner);
+
+  card.append(art, label, btn);
+  grid.append(card);
+}
+</script>

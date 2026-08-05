@@ -1,0 +1,3 @@
+numpy
+PyAudioWPatch   # PyAudio fork with WASAPI loopback; stock PortAudio cannot tap a playback device
+pillow          # the 16px icon in the title bar
