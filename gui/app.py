@@ -20,7 +20,7 @@ SETTINGS = Path(os.environ.get('APPDATA', Path.home())) / 'PyTarkAudio' / 'setti
 # scripts/make_icon.py rather than editing the ico.
 ICON = Path(__file__).parent / 'pytarkaudio.ico'
 
-WINDOW = (560, 462)
+WINDOW = (560, 580)
 # Our own title bar, since the system one is gone. Darker than anything below it, so it reads
 # as chrome rather than as part of the app.
 TITLEBAR = 30
@@ -39,6 +39,13 @@ PLATE_HOT = '#2b2e2f'  # under the cursor
 RUNNING = '#6f8e58'
 ERROR = '#944848'
 STOPPED = '#6d706d'
+
+# The meter. Bars are coloured by how loud they are, so a gunshot reads at a glance:
+# quiet stays the running green, loud goes warm.
+METER = 88             # canvas height
+METER_TRACK = '#191b19'  # the unlit part of a bar, so it reads as a meter when silent
+METER_BANDS = ('#5c7a4a', '#8f9a4e', '#b08a4a')  # calm -> warm, picked by level
+FPS_MS = 33
 
 PAD = 28
 # Windows ships Bahnschrift, a DIN condensed and exactly the right register. The rest are
@@ -204,6 +211,21 @@ def main():
     listen = dropdown('YOUR HEADPHONES  /  WHERE YOU ACTUALLY LISTEN', names,
                       pick('listen', names[-1]), lambda _: remember())
 
+    tk.Label(root, text=spaced('LIVE SPECTRUM'), bg=BG, fg=INK_FAINT, font=fonts['caption'],
+             anchor='w').pack(fill='x', padx=PAD, pady=(20, 4))
+    meter = tk.Canvas(root, height=METER, bg=BG, highlightthickness=0, bd=0)
+    meter.pack(fill='x', padx=PAD)
+    # Rectangles are made once and moved every frame. Deleting and recreating 56 canvas items
+    # 30 times a second is how you make tk flicker.
+    width = WINDOW[0] - 2 * PAD
+    gap = 3
+    bar_w = (width - gap * (audio.BANDS - 1)) / audio.BANDS
+    tracks = [meter.create_rectangle(i * (bar_w + gap), 0, i * (bar_w + gap) + bar_w, METER,
+                                     fill=METER_TRACK, outline='') for i in range(audio.BANDS)]
+    bars = [meter.create_rectangle(0, 0, 0, 0, fill=METER_BANDS[0], outline='')
+            for _ in range(audio.BANDS)]
+    del tracks  # placed once, never touched again
+
     rule((24, 0))
     footer = tk.Frame(root, bg=BG)
     footer.pack(fill='x', padx=PAD, pady=18)
@@ -228,6 +250,19 @@ def main():
 
     # ponytail: the audio thread reads this dict, never a tk widget (tkinter isn't thread-safe)
     live = {'level': eq.get(), 'streams': None}
+
+    def paint():
+        """Redraw the meter from the audio thread's array. The only place it is read."""
+        levels = audio.spectrum()
+        if not live['streams']:
+            levels *= 0.8  # nothing is feeding it, so let the bars fall instead of freezing
+        for i, bar in enumerate(bars):
+            v = float(levels[i])
+            x = i * (bar_w + gap)
+            meter.coords(bar, x, METER - max(v * METER, 1.0), x + bar_w, METER)
+            meter.itemconfig(bar, fill=METER_BANDS[min(int(v * len(METER_BANDS)),
+                                                       len(METER_BANDS) - 1)])
+        root.after(FPS_MS, paint)
 
     def set_status(text, colour):
         """The one place the indicator is written, so lamp and words cannot disagree."""
@@ -270,6 +305,7 @@ def main():
         root.destroy()
 
     stop()  # the initial state is the stopped state, buttons included
+    paint()  # runs for the life of the window, idle or not
     root.protocol('WM_DELETE_WINDOW', close)  # alt-F4 still reaches us
     strip_titlebar(root)  # last, so the window only appears once it has something to show
     root.mainloop()
