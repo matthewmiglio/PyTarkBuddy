@@ -1,4 +1,4 @@
-"""PyTarkAudio: dynamic range squasher for Tarkov.
+"""PyTarkBuddy audio: dynamic range squasher for Tarkov.
 
 Loud things (your gun) get pushed down, faint things (footsteps, bush rustle) get
 pulled up, so both land near the same loudness. Broadband, not multiband.
@@ -19,7 +19,10 @@ import pyaudiowpatch as pyaudio
 BLOCKSIZE = 256  # 5.3 ms at 48 kHz
 
 # threshold_db, downward ratio, upward ratio, floor_db
+# A ratio of 1.0 makes the gain formula collapse to exactly unity, so "Off" is a real bypass
+# and not a special case anywhere: audio passes through untouched, meter still reads it.
 LEVELS = {
+    "Off":        (-22.0, 1.0, 1.0, -60.0),
     "Soft":       (-20.0, 2.5, 1.4, -55.0),
     "Medium":     (-22.0, 5.0, 2.2, -60.0),
     "Aggressive": (-24.0, 12.0, 4.0, -65.0),
@@ -181,8 +184,12 @@ def _selfcheck():
 
     for level in LEVELS:
         loud, quiet = settled(level, 0.9), settled(level, 0.005)
-        assert loud < 0.9, f"{level}: loud not ducked"
-        assert quiet > 0.005, f"{level}: quiet not lifted"
+        if level == "Off":  # float32 round-trip, so exact equality is the wrong test
+            assert np.isclose([loud, quiet], [0.9, 0.005], rtol=1e-6).all(), \
+                "Off is not a clean bypass"
+        else:
+            assert loud < 0.9, f"{level}: loud not ducked"
+            assert quiet > 0.005, f"{level}: quiet not lifted"
         print(f"{level:11s} loud 0.900->{loud:.3f}  quiet 0.005->{quiet:.3f}  "
               f"range {20 * np.log10(loud / quiet):5.1f} dB (was 45.1 dB)")
 
