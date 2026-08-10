@@ -1,17 +1,25 @@
-# PyTarkAudio
+# PyTarkBuddy
 
 Hear the small things.
 
-A dynamic range squasher for Escape From Tarkov. It sits between the game and your headphones,
-pushes loud sounds down and pulls faint ones up, so a footstep behind a wall lands at close to
-the same loudness as the gun in your hands.
+Two things Escape From Tarkov does not do for you, in one window.
 
-No injection, no memory reading, no game files touched. It taps a Windows playback endpoint the
-same way a recording app would.
+**Audio.** A dynamic range squasher that sits between the game and your headphones, pushing loud
+sounds down and pulling faint ones up, so a footstep behind a wall lands at close to the same
+loudness as the gun in your hands.
 
-![The PyTarkAudio window](docs/assets/gui.png)
+**Macros.** One key or mouse button fires a run of keystrokes. Bind right mouse to `[` then `]`,
+or any key to any sequence of keys.
+
+No injection, no memory reading, no game files touched. The audio side taps a Windows playback
+endpoint the same way a recording app would, and the macro side listens for keys the same way a
+hotkey utility would.
+
+![The PyTarkBuddy window](docs/assets/gui.png)
 
 ## How it works
+
+### Audio
 
 Windows has no built in virtual audio device, so the only way to get between the game and your
 ears is to have the game render somewhere you are not listening, and to relay that somewhere you
@@ -28,11 +36,28 @@ flowchart LR
     G["control panel<br/><i>tkinter</i>"] -.->|device picks, EQ level| D
 ```
 
+### Macros
+
+A global hook watches every key and mouse press. When one matches a trigger you have bound, the
+keys you recorded are sent out, one press and release at a time.
+
+The trigger is never swallowed. Right mouse still aims; the macro rides along on top of it.
+
+```mermaid
+flowchart LR
+    K["Your keyboard<br/>and mouse"] -->|global hook<br/><i>pynput</i>| M["trigger match?"]
+    M -->|no| P["nothing happens"]
+    M -->|yes| S["send the bound keys<br/>one at a time"]
+    S --> W["Escape From Tarkov"]
+    K -->|always, unchanged| W
+```
+
 | Piece | What it is | Why |
 | --- | --- | --- |
 | `audio.py` | PyAudioWPatch + numpy | The capture, the compressor and the playback. |
-| `gui/app.py` | tkinter, stdlib only | The window. No widget toolkit, no theming library. |
-| `scripts/make_icon.py` | cairosvg + Pillow | Turns `gui/pytarkaudio.svg` into the `.ico`. Only needed if you redraw the icon. |
+| `macros.py` | pynput | The key and mouse hooks, and sending keystrokes back out. |
+| `gui/app.py` | tkinter, stdlib only | The window and both tabs. No widget toolkit, no theming library. |
+| `scripts/make_icon.py` | cairosvg + Pillow | Turns `gui/pytarkbuddy.svg` into the `.ico`. Only needed if you redraw the icon. |
 | `scripts/setup_msi.py` | cx_Freeze | Builds the MSI. Only runs in CI, or by hand for a dry run. |
 
 PyAudioWPatch rather than the more usual `sounddevice`, because the PortAudio build behind
@@ -43,8 +68,8 @@ and there is not going to be one.
 
 ## Download
 
-1. Grab the latest `pytarkaudio-<version>-win64.msi` from Releases.
-2. Run the installer, then launch **PyTarkAudio** from the Start menu.
+1. Grab the latest `pytarkbuddy-<version>-win64.msi` from Releases.
+2. Run the installer, then launch **PyTarkBuddy** from the Start menu.
 3. Follow [Usage](#usage) to point the game at an idle endpoint. The installer cannot do that
    part for you.
 
@@ -73,8 +98,8 @@ python scripts/setup_msi.py bdist_msi --target-version v0.0.0-local
 Requires Python 3.11 or newer.
 
 ```
-git clone https://github.com/matthewmiglio/PyTarkAudio.git
-cd PyTarkAudio
+git clone https://github.com/matthewmiglio/PyTarkBuddy.git
+cd PyTarkBuddy
 ```
 
 ```
@@ -85,18 +110,22 @@ python main.py
 That is the whole install. `cairosvg` and `cx_Freeze` are only needed if you want to regenerate
 the icon or build an installer, and the `.ico` is committed, so you do not.
 
-Check the compressor is behaving without opening the window:
+Check either half is behaving without opening the window:
 
 ```
 python audio.py
+python macros.py
 ```
 
-It prints what each level does to a loud sound and a quiet one, and fails loudly if the maths
-has drifted.
+`audio.py` prints what each level does to a loud sound and a quiet one. `macros.py` checks the
+key naming and the rows it will and will not listen for. Both fail loudly if the logic has
+drifted.
 
 ## Usage
 
-### Once, in Windows
+### AUDIO
+
+#### Once, in Windows
 
 Something has to send the game's audio somewhere you are not listening, or you will hear the raw
 mix alongside the processed one.
@@ -106,33 +135,53 @@ mix alongside the processed one.
    with nothing plugged into it, or a monitor's HDMI audio, is ideal.
 3. Leave it that way. You never have to change it back.
 
-With the game pointed there and PyTarkAudio not running, Tarkov will be silent. That is the
+With the game pointed there and PyTarkBuddy not running, Tarkov will be silent. That is the
 expected state, not a fault.
 
-### Every time
+#### Every time
 
-1. Run `python main.py`, or launch PyTarkAudio from the Start menu if you used the installer.
+1. Run `python main.py`, or launch PyTarkBuddy from the Start menu if you used the installer.
 2. **TARKOV OUTPUT**: the idle endpoint you picked above.
 3. **YOUR HEADPHONES**: where you actually listen.
 4. **EQ LEVEL**: how hard to squash. Changing it while running takes effect immediately, with no
    gap in the audio.
 5. Press **START**. The lamp goes green.
 
-Your picks are saved to `%APPDATA%\PyTarkAudio\settings.json` and come back next launch. A device
-that has since been unplugged falls back to a default rather than failing on start.
-
-### The levels
+#### The levels
 
 What each one does to a 45 dB gap between a gunshot and a footstep:
 
 | Level | Gap left | Feels like |
 | --- | --- | --- |
+| Off | 45 dB | A real bypass. The audio passes through untouched, and the meter still reads it. |
 | Soft | 26 dB | Gunfire still dominates, quiet detail is just easier to catch. |
 | Medium | 15 dB | Footsteps and firefights sit in the same range. |
 | Aggressive | 7 dB | Almost everything is the same loudness. Loud, flat, and very hard to miss anything. |
 
 Attack is fast enough to catch a gunshot's first crack, release is slow enough that the level
 does not pump between shots.
+
+### MACROS
+
+Building one:
+
+1. Press **ADD MACRO**. An empty row appears.
+2. Click the left plate, then press the key or mouse button you want as the trigger. Mouse
+   buttons show as `L-MOUSE`, `R-MOUSE` and so on.
+3. Click the right plate, then type the keys you want it to send, in order. Press **Esc** when
+   you are done.
+4. Press **ON**. The lamp goes green and the macros are live everywhere, including in game.
+
+**OFF** takes the hooks down. Closing the window does too, so nothing is left listening.
+
+The ✕ at the end of a row deletes it. Starting a recording turns the macros off first, so the
+trigger you are rebinding cannot fire while you are rebinding it.
+
+### Both
+
+Your picks, and every macro, are saved to `%APPDATA%\PyTarkBuddy\settings.json` and come back
+next launch. A device that has since been unplugged falls back to a default rather than failing
+on start. Macros always start switched off, so a fresh launch never surprises you.
 
 ## Known limits
 
@@ -141,3 +190,8 @@ does not pump between shots.
   practice, splitting the detector into bands is the fix.
 - Capture and output must run at the same sample rate. WASAPI shared mode will not resample
   between them, and mismatched endpoints raise on start rather than quietly sounding wrong.
+- A macro is a plain sequence of presses. There are no modifier combos, no hold or repeat, and
+  no delays you can set per key. `macros.HOLD` sets how long every key is held, and is the knob
+  to turn if a game misses the odd keystroke.
+- Esc cannot be recorded into a macro, because it is what ends the recording.
+- The macro list does not scroll, so it stops at eight rows.
