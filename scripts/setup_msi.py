@@ -34,6 +34,10 @@ _match = re.search(r'\d+(\.\d+){0,2}', VERSION)
 PRODUCT_VERSION = _match.group() if _match else '0.0.0'
 
 build_exe_options = {
+    # pynput picks its platform backend with importlib.import_module('._win32', package) at
+    # runtime, which a static scan cannot see, so the frozen exe shipped without it and died on
+    # launch with 'this platform is not supported'. Naming the package pulls in every submodule.
+    'packages': ['pynput'],
     # Optional imports cx_Freeze finds by scanning site-packages. Nothing here imports any of
     # them, and they are most of the build size if left in.
     'excludes': [
