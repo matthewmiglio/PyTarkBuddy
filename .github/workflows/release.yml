@@ -35,7 +35,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: pytarkaudio-msi
+          name: pytarkbuddy-msi
           path: dist/*.msi
           retention-days: 30
 

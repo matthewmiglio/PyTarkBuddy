@@ -14,12 +14,12 @@ from cx_Freeze import Executable, setup
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-NAME = 'PyTarkAudio'
+NAME = 'PyTarkBuddy'
 AUTHOR = 'Matthew Miglio'
 DESCRIPTION = 'Dynamic range compressor for Escape From Tarkov'
 COPYRIGHT = '2026 Matthew Miglio'
 UPGRADE_CODE = '{46c6e71b-3ff4-4bb9-9170-bee381f9e15a}'  # fresh GUID, never reuse another app's
-ICON = ROOT / 'gui' / 'pytarkaudio.ico'  # generated from gui/pytarkaudio.svg by scripts/make_icon.py
+ICON = ROOT / 'gui' / 'pytarkbuddy.ico'  # generated from gui/pytarkbuddy.svg by scripts/make_icon.py
 
 try:
     _idx = sys.argv.index('--target-version')
@@ -43,7 +43,7 @@ build_exe_options = {
     ],
     # gui/ is a namespace package and frozen modules live under lib/, so the icon has to land
     # beside its own module: app.py resolves it through Path(__file__).parent at runtime.
-    'include_files': [(ICON, 'lib/gui/pytarkaudio.ico')],
+    'include_files': [(ICON, 'lib/gui/pytarkbuddy.ico')],
     'include_msvcr': True,
 }
 
@@ -53,7 +53,7 @@ bdist_msi_options = {
     # cx_Freeze 8.4+ dropped bdist_msi's target_version; without these two the MSI ships as
     # v0.0.0 no matter what --target-version said.
     'product_version': PRODUCT_VERSION,
-    'output_name': f'pytarkaudio-{VERSION}-win64.msi',
+    'output_name': f'pytarkbuddy-{VERSION}-win64.msi',
     'initial_target_dir': rf'[ProgramFilesFolder]\{NAME}',
     'summary_data': {'author': AUTHOR, 'comments': DESCRIPTION},
 }
@@ -66,7 +66,7 @@ setup(
         script=ROOT / 'main.py',
         base='Win32GUI',  # no console window behind the GUI
         uac_admin=False,  # loopback capture and playback need no elevation
-        target_name='pytarkaudio.exe',
+        target_name='pytarkbuddy.exe',
         icon=ICON,
         shortcut_name=f'{NAME} {VERSION}',
         shortcut_dir='DesktopFolder',

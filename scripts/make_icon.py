@@ -1,4 +1,4 @@
-"""Rasterise gui/pytarkaudio.svg into gui/pytarkaudio.ico. Run after editing the svg.
+"""Rasterise gui/pytarkbuddy.svg into gui/pytarkbuddy.ico. Run after editing the svg.
 
     pip install cairosvg && python scripts/make_icon.py
 
@@ -15,8 +15,8 @@ import cairosvg
 from PIL import Image
 
 ROOT = Path(__file__).parent.parent
-SVG = ROOT / 'gui' / 'pytarkaudio.svg'
-ICO = ROOT / 'gui' / 'pytarkaudio.ico'
+SVG = ROOT / 'gui' / 'pytarkbuddy.svg'
+ICO = ROOT / 'gui' / 'pytarkbuddy.ico'
 SIZES = [16, 24, 32, 48, 64, 128, 256]  # 256 is the largest an ICO can hold
 
 
