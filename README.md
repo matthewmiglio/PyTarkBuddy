@@ -8,8 +8,10 @@ Two things Escape From Tarkov does not do for you, in one window.
 sounds down and pulling faint ones up, so a footstep behind a wall lands at close to the same
 loudness as the gun in your hands.
 
-**Macros.** One key or mouse button fires a run of keystrokes. Bind right mouse to `[` then `]`,
-or any key to any sequence of keys.
+**Macros.** One key or mouse button fires a run of other keys. Each key is either held for as
+long as the trigger is, or tapped on the way through, and any key can carry a pause after it.
+Bind right mouse to a held `[` and a tapped `]`, or bind `q` to shift, `e`, a tenth of a second,
+then `f`. Any key or button, any number of keys.
 
 No injection, no memory reading, no game files touched. The audio side taps a Windows playback
 endpoint the same way a recording app would, and the macro side listens for keys the same way a
@@ -38,8 +40,11 @@ flowchart LR
 
 ### Macros
 
-A global hook watches every key and mouse press. When one matches a trigger you have bound, the
-keys you recorded are sent out, one press and release at a time.
+A global hook watches every key and mouse press and release. Press a trigger you have bound and
+the keys you recorded are sent in order: a held key goes down and stays down, a tapped key goes
+down and straight back up, and a key with a pause on it stops the run there for that long. Let
+the trigger go and the held keys come back up, last one down first one up. The tapped ones are
+already finished and are left alone.
 
 The trigger is never swallowed. Right mouse still aims; the macro rides along on top of it.
 
@@ -47,8 +52,10 @@ The trigger is never swallowed. Right mouse still aims; the macro rides along on
 flowchart LR
     K["Your keyboard<br/>and mouse"] -->|global hook<br/><i>pynput</i>| M["trigger match?"]
     M -->|no| P["nothing happens"]
-    M -->|yes| S["send the bound keys<br/>one at a time"]
+    M -->|held down| S["run the keys:<br/>hold, tap, pause"]
+    M -->|let go| R["let the held ones back up"]
     S --> W["Escape From Tarkov"]
+    R --> W
     K -->|always, unchanged| W
 ```
 
@@ -169,13 +176,26 @@ Building one:
 2. Click the left plate, then press the key or mouse button you want as the trigger. Mouse
    buttons show as `L-MOUSE`, `R-MOUSE` and so on.
 3. Click the right plate, then type the keys you want it to send, in order. Press **Esc** when
-   you are done.
-4. Press **ON**. The lamp goes green and the macros are live everywhere, including in game.
+   you are done. Each key you typed becomes its own small plate on the row.
+4. Click a key's plate to switch it between held and tapped. A tapped one reads `E TAP`.
+5. Right-click a key's plate to put a pause after it, cycling through 0.05, 0.1, 0.25, 0.5 and
+   1 second and back to none. A key with a pause reads `E TAP +0.1s`.
+6. Press **ON**. The lamp goes green and the macros are live everywhere, including in game.
 
-**OFF** takes the hooks down. Closing the window does too, so nothing is left listening.
+Hold the trigger and the held keys are held. Let it go and they are released, in reverse order,
+so the first one down is the last one up. Tapped keys are pressed and released as the run goes
+through them, so they do not wait on the trigger at all.
 
-The ✕ at the end of a row deletes it. Starting a recording turns the macros off first, so the
-trigger you are rebinding cannot fire while you are rebinding it.
+So `q` bound to a tapped shift, a tapped `e` with a 0.1s pause, then a tapped `f` sends shift and
+`e`, waits a tenth of a second, and sends `f`.
+
+**OFF** takes the hooks down, and lets go of anything a macro was still holding rather than
+leaving a key stuck down. Closing the window does the same, so nothing is left listening and
+nothing is left pressed.
+
+The ✕ at the end of a row deletes it, and the ⟲ next to it records the keys again from scratch.
+Recording keys, or changing one, turns the macros off first, so the trigger you are editing
+cannot fire while you are editing it.
 
 ### Both
 
@@ -190,8 +210,12 @@ on start. Macros always start switched off, so a fresh launch never surprises yo
   practice, splitting the detector into bands is the fix.
 - Capture and output must run at the same sample rate. WASAPI shared mode will not resample
   between them, and mismatched endpoints raise on start rather than quietly sounding wrong.
-- A macro is a plain sequence of presses. There are no modifier combos, no hold or repeat, and
-  no delays you can set per key. `macros.HOLD` sets how long every key is held, and is the knob
-  to turn if a game misses the odd keystroke.
+- A key is held or tapped once. There is no repeat while held. The pause after a key is picked
+  from a short list rather than typed, so 0.05 to 1 second is what you get. `macros.HOLD` is the
+  gap between one key going down and the next, and is the knob to turn if a game misses the odd
+  keystroke.
+- A macro's pauses run while the trigger is being handled, so a long run of pauses is still
+  going after a quick tap of the trigger. Letting the trigger go waits its turn rather than
+  cutting the run short.
 - Esc cannot be recorded into a macro, because it is what ends the recording.
 - The macro list does not scroll, so it stops at eight rows.

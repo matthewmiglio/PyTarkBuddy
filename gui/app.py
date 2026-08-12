@@ -297,8 +297,12 @@ def main():
 
     # ---------------------------------------------------------------- macros page
     page = pages['macros']
-    tk.Label(page, text=spaced('WHEN I PRESS  /  IT SENDS'), bg=BG, fg=INK_FAINT,
-             font=fonts['caption'], anchor='w').pack(fill='x', padx=PAD, pady=(16, 6))
+    tk.Label(page, text=spaced('WHILE I HOLD  /  IT RUNS'), bg=BG, fg=INK_FAINT,
+             font=fonts['caption'], anchor='w').pack(fill='x', padx=PAD, pady=(16, 2))
+    tk.Label(page, text='a key is held until you let the trigger go, unless it says TAP.  '
+                        'click a key for hold / tap, right-click it for a pause after it.',
+             bg=BG, fg=INK_FAINT, font=fonts['small'], anchor='w',
+             wraplength=WINDOW[0] - PAD * 2, justify='left').pack(fill='x', padx=PAD, pady=(0, 6))
     rows = tk.Frame(page, bg=BG)
     rows.pack(fill='x', padx=PAD)
     add_button = plate(page, 'ADD MACRO', lambda: add(), width=18,
@@ -317,9 +321,18 @@ def main():
                   lambda n=i: record_trigger(n), width=14, side='left')
             tk.Label(row, text='  →  ', bg=BG, fg=INK_FAINT,
                      font=fonts['small']).pack(side='left')
-            plate(row, ' '.join(macros.label(k) for k in bind['keys']) or 'SET KEYS',
-                  lambda n=i: record_keys(n), width=18, side='left')
             plate(row, '✕', lambda n=i: remove(n), width=2, side='right')
+            if not bind['keys']:
+                plate(row, 'SET KEYS', lambda n=i: record_keys(n), width=18, side='left')
+                continue
+            # Re-record lives on its own small plate now that the keys themselves are buttons.
+            plate(row, '⟲', lambda n=i: record_keys(n), width=2, side='right')
+            for j, key in enumerate(bind['keys']):
+                # width=0 so each key takes only the room its own label needs; a run of six
+                # would not fit the window at a fixed width.
+                chip = plate(row, macros.step_label(key), lambda n=i, m=j: toggle_tap(n, m),
+                             width=0, side='left', padx=(0, 4))
+                chip.bind('<Button-3>', lambda _, n=i, m=j: cycle_wait(n, m))
         add_button.config(state='normal' if len(live['macros']) < MAX_MACROS else 'disabled')
 
     def add():
@@ -331,6 +344,22 @@ def main():
         live['macros'].pop(i)
         draw_rows()
         remember()
+
+    def edit_key(i, j, **changes):
+        """Change one key of one macro. Editing while it is running would fire it under you."""
+        stop_macros()
+        live['macros'][i]['keys'][j].update(changes)
+        draw_rows()
+        remember()
+
+    def toggle_tap(i, j):
+        edit_key(i, j, tap=not live['macros'][i]['keys'][j]['tap'])
+
+    def cycle_wait(i, j):
+        current = live['macros'][i]['keys'][j]['wait']
+        # next-one-up rather than an index, so a hand-edited pause that is not one of ours still
+        # has somewhere to go from here.
+        edit_key(i, j, wait=next((w for w in macros.WAITS if w > current), macros.WAITS[0]))
 
     def recording(text):
         """Editing while the listeners are up would fire the macro you are trying to change."""
@@ -354,7 +383,8 @@ def main():
     def record_keys(i):
         recording('Type the keys, Esc when done')
         keys = []
-        macros.capture_keys(keys.append, lambda: root.after(0, lambda: landed(i, keys)))
+        macros.capture_keys(lambda name: keys.append(macros.step(name)),
+                            lambda: root.after(0, lambda: landed(i, keys)))
 
     rule(page, (24, 0))
     macro_footer.pack(fill='x', padx=PAD, pady=18)
