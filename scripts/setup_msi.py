@@ -2,8 +2,10 @@
 
     python scripts/setup_msi.py bdist_msi --target-version v0.0.0-local
 
-Run from the repo root. The version comes off the git tag in CI and only ever names the
-artifact: nothing in source holds a version number.
+Run from the repo root. The version comes off the git tag in CI, names the artifact, and is
+written to the gitignored __version__ file beside the exe, which version.py reads back at runtime
+so update.py can tell whether the newest release is newer than us. Nothing tracked in git holds
+a version number.
 """
 import re
 import sys
@@ -28,6 +30,9 @@ try:
 except (ValueError, IndexError):
     VERSION = 'v0.0.0'
 
+version_file = ROOT / '__version__'
+version_file.write_text(VERSION, encoding='utf-8')
+
 # Windows Installer only accepts a numeric a.b.c ProductVersion, so a tag like v1.2.3-rc1 has
 # to be trimmed down to 1.2.3. The full tag still names the file.
 _match = re.search(r'\d+(\.\d+){0,2}', VERSION)
@@ -47,7 +52,10 @@ build_exe_options = {
     ],
     # gui/ is a namespace package and frozen modules live under lib/, so the icon has to land
     # beside its own module: app.py resolves it through Path(__file__).parent at runtime.
-    'include_files': [(ICON, 'lib/gui/pytarkbuddy.ico')],
+    'include_files': [
+        (ICON, 'lib/gui/pytarkbuddy.ico'),
+        (version_file, '__version__'),  # version.py reads this next to the exe when frozen
+    ],
     'include_msvcr': True,
 }
 
@@ -58,7 +66,12 @@ bdist_msi_options = {
     # v0.0.0 no matter what --target-version said.
     'product_version': PRODUCT_VERSION,
     'output_name': f'pytarkbuddy-{VERSION}-win64.msi',
-    'initial_target_dir': rf'[ProgramFilesFolder]\{NAME}',
+    # Per-user install: all_users=False makes it ALLUSERS=2 + MSIINSTALLPERUSER=1, so it lands
+    # without elevation, and update.py can then apply a newer MSI silently with msiexec /quiet.
+    # cx_Freeze still defaults the dir to ProgramFiles even per-user, so LocalAppData is set by
+    # hand or the install would want admin after all.
+    'all_users': False,
+    'initial_target_dir': rf'[LocalAppDataFolder]\{NAME}',
     'summary_data': {'author': AUTHOR, 'comments': DESCRIPTION},
 }
 

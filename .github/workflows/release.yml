@@ -1,7 +1,8 @@
 name: release
 
-# The tag is the version. Nothing in source holds one: setup_msi.py only uses the tag to name
-# the artifact. Push v1.2.3 and this produces the installer for it.
+# The tag is the version. Nothing tracked in git holds one: setup_msi.py takes the tag, names the
+# artifact with it and writes it to the gitignored __version__ file that ships beside the exe, which
+# is how update.py knows what it is running. Push v1.2.3 and this produces the installer for it.
 on:
   push:
     tags: ["v*.*.*"]

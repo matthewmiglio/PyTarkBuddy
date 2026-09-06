@@ -80,9 +80,21 @@ and there is not going to be one.
 3. Follow [Usage](#usage) to point the game at an idle endpoint. The installer cannot do that
    part for you.
 
+It installs for the current user only, into `%LocalAppData%\PyTarkBuddy`, so it never asks for
+administrator rights.
+
+After that it keeps itself current. On every launch the installed build asks GitHub for the
+newest release, and if there is one it opens a small progress window that downloads the installer,
+applies it once the app has closed, and reopens the app on the new version. No prompt, no
+administrator rights, nothing to click. If you are offline or GitHub is unreachable the check is
+abandoned after six seconds and the app opens as normal, and running from source never checks at
+all. Nothing is sent anywhere: it is one read of the public releases page.
+
 The installer is built by `.github/workflows/release.yml` on `windows-latest` and published when
-a `vX.Y.Z` tag is pushed. The tag is the only place a version number lives: nothing in source
-holds one, and `scripts/setup_msi.py` only reads the tag to name the artifact. A manual
+a `vX.Y.Z` tag is pushed. The tag is the only place a version number lives: nothing tracked in git
+holds one. `scripts/setup_msi.py` reads the tag to name the artifact and writes it into a
+`__version__` file that ships beside the exe, which is how the app knows whether a release is
+newer than itself. A manual
 `workflow_dispatch` run builds the MSI and uploads it as an artifact without minting a release,
 so the pipeline can be exercised without shipping anything.
 

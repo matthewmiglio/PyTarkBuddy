@@ -30,6 +30,8 @@ htmlcov/
 .ipynb_checkpoints/
 
 # ---- Build output ----
+# written by setup_msi.py from the git tag, exists only during a build
+__version__
 build/
 dist/
 *.spec
