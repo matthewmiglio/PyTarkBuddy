@@ -82,7 +82,11 @@ setup(
     executables=[Executable(
         script=ROOT / 'main.py',
         base='Win32GUI',  # no console window behind the GUI
-        uac_admin=False,  # loopback capture and playback need no elevation
+        # Elevated, and the UAC prompt on every launch is the price. Windows drops synthetic
+        # keystrokes sent from a normal process into a higher-integrity window, so an unelevated
+        # build's macros fire and go nowhere while a game like Tarkov is focused. Audio needs
+        # none of this; macros do.
+        uac_admin=True,
         target_name='pytarkbuddy.exe',
         icon=ICON,
         shortcut_name=f'{NAME} {VERSION}',

@@ -80,14 +80,16 @@ and there is not going to be one.
 3. Follow [Usage](#usage) to point the game at an idle endpoint. The installer cannot do that
    part for you.
 
-It installs for the current user only, into `%LocalAppData%\PyTarkBuddy`, so it never asks for
-administrator rights.
+It installs for the current user only, into `%LocalAppData%\PyTarkBuddy`, so the install itself
+never asks for administrator rights. Launching it does: say yes to the Windows prompt once per
+run. Without it the macros fire into a game running as administrator and go nowhere, because
+Windows drops keystrokes sent up from a lower-privilege program.
 
 After that it keeps itself current. On every launch the installed build asks GitHub for the
 newest release, and if there is one it opens a small progress window that downloads the installer,
-applies it once the app has closed, and reopens the app on the new version. No prompt, no
-administrator rights, nothing to click. If you are offline or GitHub is unreachable the check is
-abandoned after six seconds and the app opens as normal, and running from source never checks at
+applies it once the app has closed, and reopens the app on the new version. Nothing to click
+beyond the usual administrator prompt when it reopens. If you are offline or GitHub is
+unreachable the check is abandoned after six seconds and the app opens as normal, and running from source never checks at
 all. Nothing is sent anywhere: it is one read of the public releases page.
 
 The installer is built by `.github/workflows/release.yml` on `windows-latest` and published when
